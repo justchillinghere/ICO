@@ -185,7 +185,7 @@ describe("Test ICO contract", function () {
       expect(balanceAfter.sub(balanceBefore)).to.equal(expectedAmount);
     });
     it("Should withdraw 50% of purchased tokens after 3 months", async function () {
-      const timeElapsed = 30 * 24 * 60 * 60 * 3; // 2 months in seconds
+      const timeElapsed = 30 * 24 * 60 * 60 * 3; // 3 months in seconds
       await shiftTime(timeElapsed);
       const balanceBefore = await tstToken.balanceOf(owner.address);
       await myICO.withdrawTokens();
@@ -203,6 +203,67 @@ describe("Test ICO contract", function () {
       const balanceAfter = await tstToken.balanceOf(owner.address);
       const expectedAmount = (await myICO.users(owner.address)).purchased;
       expect(balanceAfter.sub(balanceBefore)).to.equal(expectedAmount);
+    });
+    it("Should emit event with correct arguments after withdrawing", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60 * 4; // 2 months in seconds
+      await shiftTime(timeElapsed);
+      await expect(myICO.withdrawTokens())
+        .to.emit(myICO, "Claimed")
+        .withArgs(owner.address, tstAmount);
+    });
+    it("Should withdraw correct amounts of tokens if wthdrawed multiple times", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 1 month in seconds
+      await shiftTime(timeElapsed);
+      await myICO.withdrawTokens(); // withdraw 10%
+      await shiftTime(timeElapsed * 2); // shift 2 months
+      const balanceBefore = await tstToken.balanceOf(owner.address);
+      await myICO.withdrawTokens(); // withdraw up to 50%
+      const balanceAfter = await tstToken.balanceOf(owner.address);
+      const expectedAmount = (await myICO.users(owner.address)).purchased
+        .div(10)
+        .mul(4); // 40% of purchased tokens
+      expect(balanceAfter.sub(balanceBefore)).to.equal(expectedAmount);
+    });
+  });
+  describe("Negative tests for withdrawTokens function", function () {
+    const usdAmount: BigNumber = ethers.utils.parseUnits("25", 6);
+    const buyStartShift: number = 1;
+    const claimStartShift: number = 3600;
+    let buyStartValue: number;
+    let claimStartValue: number;
+    beforeEach(async () => {
+      buyStartValue = (await time.latest()) + buyStartShift;
+      claimStartValue = (await time.latest()) + claimStartShift;
+      await myICO.initialize(buyStartValue, claimStartValue);
+      // Mint USD tokens for owner
+      await usdToken.addMinterRole(owner.address);
+      await usdToken.mint(owner.address, usdAmount);
+      await usdToken.approve(myICO.address, usdAmount);
+      // Allow ICO to mint TST tokens to claimers
+      await tstToken.addMinterRole(myICO.address);
+      // Make preparations for claiming
+      await shiftTime(buyStartShift); // shift to buy period
+      await myICO.buyToken(usdAmount);
+    });
+    it("Should revert if claiming has not started", async function () {
+      await expect(myICO.withdrawTokens()).to.be.revertedWith(
+        "Claim has not started yet"
+      );
+    });
+    it("Should revert if no claiming period has elapseds", async function () {
+      await shiftTime(claimStartValue - buyStartValue); // shift to claim period
+      await expect(myICO.withdrawTokens()).to.be.revertedWith(
+        "No tokens to withdraw"
+      );
+    });
+    it("Should revert if trying to withdraw more than 100%", async function () {
+      await shiftTime(claimStartValue - buyStartValue); // shift to claim period
+      const timeElapsed = 30 * 24 * 60 * 60 * 4; // 2 months in seconds
+      await shiftTime(timeElapsed);
+      await myICO.withdrawTokens(); // withdraw 100%
+      await expect(myICO.withdrawTokens()).to.be.revertedWith(
+        "No tokens to withdraw"
+      );
     });
   });
 });
