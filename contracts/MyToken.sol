@@ -10,9 +10,19 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract MyToken is ERC20, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    uint8 _decimals;
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 decimals_
+    ) ERC20(name, symbol) {
+        _decimals = decimals_;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
     }
 
     function addMinterRole(
