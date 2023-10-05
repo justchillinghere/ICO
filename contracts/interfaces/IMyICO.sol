@@ -29,8 +29,8 @@ interface IMyICO {
     /**
      * @dev Initializes the ICO contract with the specified parameters.
      * It sets the beggingings of buying and claiming periods.
-     * @param _buyStart The total amount of tokens to be distributed as rewards.
-     * @param _claimStart The percentage of rewards to be distributed per epoch.
+     * @param _buyStart The absolute time in seconds of starting the ICO buying period.
+     * @param _claimStart The absolute time in seconds of starting the ICO claiming period.
      * Requirements:
      * - The contract must not have been initialized before.
      * - The buy start must be in the future.
