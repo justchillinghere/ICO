@@ -15,13 +15,18 @@ async function main() {
     await ethers.getContractFactory("MyToken");
 
   for (let token in tokenData) {
+    if (tokenData[token].address) {
+      console.log(
+        `Token ${tokenData[token].name} has already been deployed on ${tokenData[token].address}`
+      );
+      continue;
+    }
     const tokenContract: MyToken = await MyContract.deploy(
       tokenData[token].name,
       tokenData[token].symbol,
       tokenData[token].decimals
     );
     await tokenContract.deployed();
-    tokenData[token].address = tokenContract.address;
     console.log(`Token ${token} has been deployed to ${tokenContract.address}`);
 
     console.log("wait of delay...");
@@ -29,7 +34,7 @@ async function main() {
     console.log("starting verify token...");
     try {
       await run("verify:verify", {
-        address: tokenData[token].address,
+        address: tokenContract.address,
         contract: "contracts/MyToken.sol:MyToken",
         constructorArguments: [
           tokenData[token].name,
@@ -38,11 +43,12 @@ async function main() {
         ],
       });
       console.log("verify success");
-      return;
+      continue;
     } catch (e: any) {
       console.log(e.message);
     }
   }
+  return;
 }
 
 // We recommend this pattern to be able to use async/await everywhere

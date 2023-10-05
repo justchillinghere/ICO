@@ -14,11 +14,16 @@ async function main() {
   Object.keys(tokenData).forEach((tokenName) => {
     if (!tokenData[tokenName].address) {
       throw new Error(
-        `${tokenName}.address and prior tokens deployment is required in tokenData.\
+        `Prior tokens deployment is required in tokenData.\
 Please run deployTokens.ts first`
       );
     }
   });
+  if (contractData.address) {
+    throw new Error(
+      `ICO contract has already been deployed on ${contractData.address}`
+    );
+  }
   const MyContract: MyICO__factory = await ethers.getContractFactory("MyICO");
   const myContract: MyICO = await MyContract.deploy(
     tokenData.tokenTST.address,
@@ -32,15 +37,15 @@ Please run deployTokens.ts first`
   contractData.address = myContract.address;
 
   console.log("wait of delay...");
-  await delay(30000); // delay 30 seconds
+  await delay(15000); // delay 30 seconds
   console.log("starting verify token...");
   try {
     await run("verify:verify", {
       address: myContract!.address,
       contract: "contracts/MyICO.sol:MyICO",
       constructorArguments: [
-        tokenData.tokenLP.address,
-        tokenData.tokenReward.address,
+        tokenData.tokenTST.address,
+        tokenData.tokenUSD.address,
       ],
     });
     console.log("verify success");

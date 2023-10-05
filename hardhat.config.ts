@@ -47,19 +47,19 @@ export const tokenData: {
     name: "tokenTST",
     symbol: "TST",
     decimals: 18,
-    address: "",
+    address: "0x32dD40A2AD6C08Aec74350D0D98B37D49F1dc736",
   },
   tokenUSD: {
     name: "tokenUSD",
     symbol: "USD",
     decimals: 6,
-    address: "",
+    address: "0x199DA96aCe622c8fFf5f9b632968E3E2847526D3",
   },
 };
 
 export const contractData: {
   [key: string]: string;
-} = { address: "" };
+} = { address: "0x6C5d3aba885c93cd9299C918Fc27a1D66468CDeB" };
 
 const chainIds = {
   "arbitrum-mainnet": 42161,

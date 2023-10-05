@@ -1,5 +1,6 @@
-import "./farmingClaim";
-import "./farmingDeposit";
-import "./farmingWithdraw";
 import "./ICOInitialize";
-import "./tokensApprove";
+import "./ICOBuyToken";
+import "./ICOGetAmount";
+import "./ICOWithdrawTokens";
+import "./ICOWithdrawUSD";
+import "./tokenApprove";

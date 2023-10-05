@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { BigNumber, ContractTransaction, ContractReceipt } from "ethers";
 import { Address } from "cluster";
 
-task("approve", "Approve spender to spend tokens")
+task("tokenApprove", "Approve spender to spend tokens")
   .addParam("spender", "Address of the spender")
   .addParam("value", "Amount of tokens to approve")
   .addParam("token", "Address of the token")
