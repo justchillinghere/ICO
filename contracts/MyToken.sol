@@ -3,12 +3,13 @@ pragma solidity =0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./interfaces/IMyToken.sol";
 
 /**
  * @title MyToken
  * @dev A contract for a custom ERC20 token inherited from OpenZeppelin.
  */
-contract MyToken is ERC20, AccessControl {
+contract MyToken is IMyToken, ERC20, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint8 _decimals;
 
@@ -21,10 +22,24 @@ contract MyToken is ERC20, AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function decimals() public view virtual override returns (uint8) {
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     */
+    function decimals()
+        public
+        view
+        virtual
+        override(ERC20, IERC20Metadata)
+        returns (uint8)
+    {
         return _decimals;
     }
 
+    /**
+     *
+     * @dev Adds minter role to the specified address.
+     * @param newMinter The address to which the minter role will be granted.
+     */
     function addMinterRole(
         address newMinter
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {

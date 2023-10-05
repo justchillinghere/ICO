@@ -1,5 +1,6 @@
 import { ethers, run, network } from "hardhat";
 import { tokenData } from "../hardhat.config";
+import { MyToken, MyToken__factory } from "../src/types";
 
 const delay = async (time: number) => {
   return new Promise((resolve: any) => {
@@ -10,34 +11,31 @@ const delay = async (time: number) => {
 };
 
 async function main() {
-  const MyContract = await ethers.getContractFactory("MyToken");
+  const MyContract: MyToken__factory =
+    await ethers.getContractFactory("MyToken");
 
-  const tokenLP = await MyContract.deploy(
-    tokenData.tokenLP.name,
-    tokenData.tokenLP.symbol
-  );
-  const tokenReward = await MyContract.deploy(
-    tokenData.tokenReward.name,
-    tokenData.tokenReward.symbol
-  );
-  await tokenLP.deployed();
-  await tokenReward.deployed();
+  for (let token in tokenData) {
+    const tokenContract: MyToken = await MyContract.deploy(
+      tokenData[token].name,
+      tokenData[token].symbol,
+      tokenData[token].decimals
+    );
+    await tokenContract.deployed();
+    tokenData[token].address = tokenContract.address;
+    console.log(`Token ${token} has been deployed to ${tokenContract.address}`);
 
-  tokenData.tokenLP.address = tokenLP.address;
-  tokenData.tokenReward.address = tokenReward.address;
-
-  console.log(`LP token has been deployed to ${tokenLP.address}`);
-  console.log(`Reward token has been deployed to ${tokenReward.address}`);
-
-  console.log("wait of delay...");
-  await delay(30000); // delay 30 seconds
-  console.log("starting verify token...");
-  for (let key in tokenData) {
+    console.log("wait of delay...");
+    await delay(15000); // delay 15 seconds
+    console.log("starting verify token...");
     try {
       await run("verify:verify", {
-        address: tokenData[key].address,
+        address: tokenData[token].address,
         contract: "contracts/MyToken.sol:MyToken",
-        constructorArguments: [tokenData[key].name, tokenData[key].symbol],
+        constructorArguments: [
+          tokenData[token].name,
+          tokenData[token].symbol,
+          tokenData[token].decimals,
+        ],
       });
       console.log("verify success");
       return;

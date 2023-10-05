@@ -1,5 +1,6 @@
 import { ethers, run, network } from "hardhat";
-import { tokenData } from "../hardhat.config";
+import { tokenData, contractData } from "../hardhat.config";
+import { MyICO, MyICO__factory } from "../src/types";
 
 const delay = async (time: number) => {
   return new Promise((resolve: any) => {
@@ -10,17 +11,25 @@ const delay = async (time: number) => {
 };
 
 async function main() {
-  const MyContract = await ethers.getContractFactory("Farming");
-  const myContract = await MyContract.deploy(
-    tokenData.tokenLP.address,
-    tokenData.tokenReward.address
+  Object.keys(tokenData).forEach((tokenName) => {
+    if (!tokenData[tokenName].address) {
+      throw new Error(
+        `${tokenName}.address and prior tokens deployment is required in tokenData.\
+Please run deployTokens.ts first`
+      );
+    }
+  });
+  const MyContract: MyICO__factory = await ethers.getContractFactory("MyICO");
+  const myContract: MyICO = await MyContract.deploy(
+    tokenData.tokenTST.address,
+    tokenData.tokenUSD.address
   );
 
   await myContract.deployed();
 
-  console.log(
-    `The farming contract has been deployed to ${myContract.address}`
-  );
+  console.log(`The ICO contract has been deployed to ${myContract.address}`);
+
+  contractData.address = myContract.address;
 
   console.log("wait of delay...");
   await delay(30000); // delay 30 seconds
@@ -28,7 +37,7 @@ async function main() {
   try {
     await run("verify:verify", {
       address: myContract!.address,
-      contract: "contracts/Farming.sol:Farming",
+      contract: "contracts/MyICO.sol:MyICO",
       constructorArguments: [
         tokenData.tokenLP.address,
         tokenData.tokenReward.address,

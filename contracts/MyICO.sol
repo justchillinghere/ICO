@@ -5,6 +5,11 @@ import "./MyToken.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./interfaces/IMyICO.sol";
 
+/**
+ * @title MyICO
+ * @author justchillinghere
+ * @notice A contract for a custom ICO.
+ */
 contract MyICO is IMyICO, AccessControl {
     struct User {
         uint256 purchased;
@@ -23,10 +28,6 @@ contract MyICO is IMyICO, AccessControl {
     uint256 minPurchase = 10; // Min TST to buy
     uint256 maxPurchase = 100; // Max TST to buy
 
-    event Claimed(address _user, uint256 _amountClaimed);
-    event Deposited(address user, uint256 amountUSD, uint256 amountTST);
-    event Initialized(uint256 _buyStart, uint256 _claimStart);
-
     constructor(address _tstToken, address _usdToken) {
         tstToken = MyToken(_tstToken);
         usdToken = MyToken(_usdToken);
@@ -34,6 +35,9 @@ contract MyICO is IMyICO, AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /**
+     * @dev See {IMyICO-initialize}.
+     */
     function initialize(
         uint256 _buyStart,
         uint256 _claimStart
@@ -53,6 +57,9 @@ contract MyICO is IMyICO, AccessControl {
         emit Initialized(_buyStart, _claimStart);
     }
 
+    /**
+     * @dev See {IMyICO-buyToken}.
+     */
     function buyToken(uint256 usdAmount) external {
         require(
             block.timestamp >= buyStart,
@@ -76,6 +83,14 @@ contract MyICO is IMyICO, AccessControl {
         emit Deposited(msg.sender, usdAmount, newTstBalance);
     }
 
+    /**
+     *
+     * @dev Calculates the amount of tokens that can be claimed by the user at the moment
+     * @param user The address of the user to calculate the claimable amount
+     * @param percentage The percentage of the purchased tokens to be claimed
+     *
+     * Note that `percentage` is in basis points (bp) and not in percentage points (%).
+     */
     function _getClaimable(
         address user,
         uint256 percentage
@@ -83,6 +98,9 @@ contract MyICO is IMyICO, AccessControl {
         return ((users[user].purchased * percentage) / HUNDRED_PERCENT);
     }
 
+    /**
+     * @dev See {IMyICO-getAvailableAmount}.
+     */
     function getAvailableAmount(address user) public view returns (uint256) {
         uint256 tokensFreed;
         uint256 timeElapsed = (block.timestamp - claimStart) / 30 days;
@@ -93,6 +111,9 @@ contract MyICO is IMyICO, AccessControl {
         return (tokensFreed - users[msg.sender].claimed);
     }
 
+    /**
+     * @dev See {IMyICO-withdrawTokens}.
+     */
     function withdrawTokens() external {
         require(block.timestamp >= claimStart, "Claim has not started yet");
         uint256 availableAmount = getAvailableAmount(msg.sender);
@@ -102,6 +123,9 @@ contract MyICO is IMyICO, AccessControl {
         emit Claimed(msg.sender, availableAmount);
     }
 
+    /**
+     * @dev See {IMyICO-withdrawUSD}.
+     */
     function withdrawUSD() external onlyRole(DEFAULT_ADMIN_ROLE) {
         usdToken.transfer(owner, usdToken.balanceOf(address(this)));
     }

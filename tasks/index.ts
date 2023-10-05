@@ -1,5 +1,5 @@
 import "./farmingClaim";
 import "./farmingDeposit";
 import "./farmingWithdraw";
-import "./farmingInitialize";
+import "./ICOInitialize";
 import "./tokensApprove";

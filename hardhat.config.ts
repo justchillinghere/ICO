@@ -39,20 +39,27 @@ export const tokenData: {
   [key: string]: {
     name: string;
     symbol: string;
+    decimals: number;
     address: string;
   };
 } = {
-  tokenLP: {
-    name: "tokenLP",
-    symbol: "TLP",
-    address: "0x09181a11d0Bf13ef860A7BAed7Ee593298128701",
+  tokenTST: {
+    name: "tokenTST",
+    symbol: "TST",
+    decimals: 18,
+    address: "",
   },
-  tokenReward: {
-    name: "tokenReward",
-    symbol: "TRD",
-    address: "0x8cCce79D6653B94bfb14B49A398FD493988717A5",
+  tokenUSD: {
+    name: "tokenUSD",
+    symbol: "USD",
+    decimals: 6,
+    address: "",
   },
 };
+
+export const contractData: {
+  [key: string]: string;
+} = { address: "" };
 
 const chainIds = {
   "arbitrum-mainnet": 42161,
