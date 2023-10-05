@@ -1,20 +1,21 @@
-# Simple farming implementation
+# Simple ICO implementation
 
 ## Description
 
-The project is a simple farming implementation using a smart contract called Farming.sol. The smart contract allows users to stake LP tokens for a specified period of time and earn rewards in ERC20 tokens.
+The MyICO contract is a custom ICO (Initial Coin Offering) contract. It allows users to purchase tokens using USD and claim their tokens at a later time. Here are the important details of the contract:
 
-Here are the main features of the smart contract:
+- The contract has an `initialize` function that can only be called by the admin role to set the start times for buying and claiming tokens.
+- The contract has a `buyToken` function that allows users to purchase tokens using USD. The function converts the USD amount to TST tokens based on the exchange rate and checks if the user's balance is within the allowed range.
+- The contract has a `\_getClaimable` internal function that calculates the amount of tokens that can be claimed by a user based on the percentage and the user's purchased tokens.
+- The contract has a `getAvailableAmount` function that calculates the amount of tokens that can be claimed by a user at the current time based on the elapsed time since the claim start.
+- The contract has a `withdrawTokens` function that allows users to claim their available tokens. The function checks if the claim period has started and transfers the tokens to the user.
+- The contract has a `withdrawUSD` function that can only be called by the admin role to withdraw the remaining USD tokens from the contract.
 
-- Users can deposit LP tokens into the contract by calling the deposit function. The deposit amount cannot exceed the remaining tokens available for staking.
-- The contract owner can initialize the farming by calling the initialize function. This sets the total amount of LP tokens available for staking, the percentage of rewards to be distributed, the duration of each epoch, the number of epochs, and the start time of the farming.
-- Once the farming is initialized and the start time is reached, users can deposit LP tokens and start earning rewards.
-- After the farming period is over, users can withdraw their staked LP tokens and claim their earned rewards by calling the withdraw and claimRewards functions respectively.
-- The smart contract keeps track of each user's staked amount, deposit time, and whether they have already claimed their rewards.
+This contract provides a simple and secure way for users to participate in the ICO by purchasing tokens and claiming them at the appropriate time.
 
 ## Deployed contract example
 
-You can find and test my deployed contract in goerli testnet by this address: [0x349F6E0C3Ffc59d1d454401648374F0B7C71aA42](https://goerli.etherscan.io/address/0x349F6E0C3Ffc59d1d454401648374F0B7C71aA42)
+You can find and test my deployed contract in goerli testnet by this address: [0x6C5d3aba885c93cd9299C918Fc27a1D66468CDeB](https://mumbai.polygonscan.com/address/0x6C5d3aba885c93cd9299C918Fc27a1D66468CDeB)
 
 ## Installation
 
