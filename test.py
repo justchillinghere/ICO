@@ -23,7 +23,7 @@ def find_min_operations(q, s):
 	# Check if answer is within any of the first sums
 	if q in sums.values():
 		return 2
-	# If all sums are bigger than q, then there is no answer
+	# If all sums are bigger than q, then there is no answer !!!!
 	elif all(q < i for i in sums.values()):
 		return -1
 	else:
@@ -46,11 +46,26 @@ def find_min_operations(q, s):
 		else:
 			result += new_res
 	return result
-	
 
-scores = []
+
+def new_find_min_operations(Q, arr):
+    n = len(arr)
+    dp = [[-1] * (Q + 1) for _ in range(n + 1)]
+    dp[0][0] = 0
+
+    for i in range(1, n + 1):
+        for j in range(Q + 1):
+            dp[i][j] = dp[i - 1][j]
+            if j >= arr[i - 1] and dp[i - 1][j - arr[i - 1]] != -1:
+                dp[i][j] = dp[i - 1][j - arr[i - 1]] + 1
+
+    return dp[n][Q] if dp[n][Q] != -1 else -1
+
+scores = [1,2,3,4,3,1,1,2,3,4]
+
 n = len(scores)
 
-for Q in range(4, 5):
-	print(f"For Q = {Q}, minimum students required: {find_min_operations(Q, scores)}")
+for Q in range(0, 15):
+	print(f"For Q = {Q}, minimum students required: {new_find_min_operations(Q, scores)}")
+
 

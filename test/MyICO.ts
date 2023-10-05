@@ -140,6 +140,84 @@ describe("Test ICO contract", function () {
       );
     });
   });
+  describe("Test ICO contract getAvailableAmount function", function () {
+    const usdAmount: BigNumber = ethers.utils.parseUnits("25", 6);
+    const tstAmount: BigNumber = getTSTAmountFromUSD(usdAmount);
+    const buyStartShift: number = 1;
+    const claimStartShift: number = 3600;
+    let buyStartValue: number;
+    let claimStartValue: number;
+    beforeEach(async () => {
+      buyStartValue = (await time.latest()) + buyStartShift;
+      claimStartValue = (await time.latest()) + claimStartShift;
+      await myICO.initialize(buyStartValue, claimStartValue);
+      // Mint USD tokens for owner
+      await usdToken.addMinterRole(owner.address);
+      await usdToken.mint(owner.address, usdAmount);
+      await usdToken.approve(myICO.address, usdAmount);
+      // Allow ICO to mint TST tokens to claimers
+      await tstToken.addMinterRole(myICO.address);
+      // Make preparations for claiming
+      await shiftTime(buyStartShift); // shift to buy period
+      await myICO.buyToken(usdAmount);
+      await shiftTime(claimStartValue - buyStartValue); // shift to claim period
+    });
+    it("Should show available amount of 10% of purchased tokens after 1 month", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed);
+      const expectedAmount = (await myICO.users(owner.address)).purchased.div(
+        10
+      );
+      expect(await myICO.getAvailableAmount(owner.address)).to.equal(
+        expectedAmount
+      );
+    });
+    it("Should show available amount of 30% of purchased tokens after 2 month", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed * 2);
+      const expectedAmount = (await myICO.users(owner.address)).purchased
+        .div(10)
+        .mul(3);
+      expect(await myICO.getAvailableAmount(owner.address)).to.equal(
+        expectedAmount
+      );
+    });
+    it("Should show available amount of 50% of purchased tokens after 3 month", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed * 3);
+      const expectedAmount = (await myICO.users(owner.address)).purchased
+        .div(10)
+        .mul(5);
+      expect(await myICO.getAvailableAmount(owner.address)).to.equal(
+        expectedAmount
+      );
+    });
+    it("Should show available amount of 100% of purchased tokens after 4 month", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed * 4);
+      const expectedAmount = (await myICO.users(owner.address)).purchased;
+      expect(await myICO.getAvailableAmount(owner.address)).to.equal(
+        expectedAmount
+      );
+    });
+    it("Should show available amount if user withdrawed before another claim", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed * 1);
+      await myICO.withdrawTokens();
+      await shiftTime(timeElapsed * 3);
+      const expectedAmount = (await myICO.users(owner.address)).purchased
+        .div(10)
+        .mul(9);
+      expect(await myICO.getAvailableAmount(owner.address)).to.equal(
+        expectedAmount
+      );
+    });
+    it("Should show 0 balance for if user not purchased", async function () {
+      const timeElapsed = 30 * 24 * 60 * 60; // 30 days in seconds
+      await shiftTime(timeElapsed * 1);
+      expect(await myICO.getAvailableAmount(user1.address)).to.equal(0);
+    });
+  });
   describe("Test ICO contract withdrawTokens function", function () {
     const usdAmount: BigNumber = ethers.utils.parseUnits("25", 6);
     const tstAmount: BigNumber = getTSTAmountFromUSD(usdAmount);
@@ -250,20 +328,66 @@ describe("Test ICO contract", function () {
         "Claim has not started yet"
       );
     });
-    it("Should revert if no claiming period has elapseds", async function () {
+    it("Should revert if no claiming period has elapsed", async function () {
       await shiftTime(claimStartValue - buyStartValue); // shift to claim period
       await expect(myICO.withdrawTokens()).to.be.revertedWith(
         "No tokens to withdraw"
       );
     });
+    it("Should revert if user did not buy tokens", async function () {
+      await shiftTime(claimStartValue - buyStartValue); // shift to claim period
+      const timeElapsed = 30 * 24 * 60 * 60 * 4; // 4 months in seconds
+      await shiftTime(timeElapsed);
+      const myICOUser1 = myICO.connect(user1);
+      await expect(myICOUser1.withdrawTokens()).to.be.revertedWith(
+        "No tokens to withdraw"
+      );
+    });
     it("Should revert if trying to withdraw more than 100%", async function () {
       await shiftTime(claimStartValue - buyStartValue); // shift to claim period
-      const timeElapsed = 30 * 24 * 60 * 60 * 4; // 2 months in seconds
+      const timeElapsed = 30 * 24 * 60 * 60 * 4; // 4 months in seconds
       await shiftTime(timeElapsed);
       await myICO.withdrawTokens(); // withdraw 100%
       await expect(myICO.withdrawTokens()).to.be.revertedWith(
         "No tokens to withdraw"
       );
+    });
+  });
+  describe("Test ICO contract withdrawUSD function", function () {
+    const usdAmount: BigNumber = ethers.utils.parseUnits("25", 6);
+    const buyStartShift: number = 1;
+    const claimStartShift: number = 3600;
+    let buyStartValue: number;
+    let claimStartValue: number;
+    beforeEach(async () => {
+      buyStartValue = (await time.latest()) + buyStartShift;
+      claimStartValue = (await time.latest()) + claimStartShift;
+      await myICO.initialize(buyStartValue, claimStartValue);
+      // Mint USD tokens for owner
+      await usdToken.addMinterRole(owner.address);
+      // Allow ICO to mint TST tokens to claimers
+      await tstToken.addMinterRole(myICO.address);
+      // Make preparations for claiming
+      await shiftTime(buyStartShift); // shift to buy period
+      for (let account of [owner, user1, user2]) {
+        await usdToken.mint(account.address, usdAmount);
+        await usdToken.connect(account).approve(myICO.address, usdAmount);
+        await myICO.connect(account).buyToken(usdAmount);
+      }
+      await shiftTime(claimStartValue - buyStartValue); // shift to claim period
+    });
+    it("Should withdraw all USD tokens from ICO", async function () {
+      const amountUSDPurchased = await usdToken.balanceOf(myICO.address);
+      const balanceBefore = await usdToken.balanceOf(owner.address);
+      await myICO.withdrawUSD();
+      const balanceAfter = await usdToken.balanceOf(owner.address);
+      expect(balanceAfter.sub(balanceBefore)).to.equal(amountUSDPurchased);
+    });
+    it("Should revert to withdraw for not admin role", async function () {
+      //   await expect(myICO.connect(user1).withdrawUSD()).to.be.revertedWith(
+      //     `AccessControl: account ${user1.address} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
+      //   );
+      await expect(myICO.connect(user1).withdrawUSD()).to.be.reverted;
     });
   });
 });
